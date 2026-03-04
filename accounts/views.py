@@ -2,14 +2,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
-from .permissions import IsOwner, IsManagerOrOwner,IsProjectMember
+from rest_framework.exceptions import ValidationError
+
+from .permissions import IsOwner, IsManagerOrOwner, IsProjectMember
 from .models import Project, Task
 from .serializers import (
     CompanyRegisterSerializer,
     ProjectSerializer,
     TaskSerializer
 )
+
 
 
 class RegisterCompanyView(APIView):
@@ -58,10 +60,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
+
+        company = self.request.user.company
+
+        if company.plan == "FREE":
+            project_count = Project.objects.filter(company=company).count()
+
+            if project_count >= 3:
+                raise ValidationError(
+                    {"error": "Free plan allows only 3 projects. Upgrade to PRO."}
+                )
+
         serializer.save(
-            company=self.request.user.company,
+            company=company,
             created_by=self.request.user
         )
+
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
@@ -72,6 +86,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         project = serializer.validated_data.get("project")
+
         if project.company != self.request.user.company:
             raise PermissionError("Cannot add task to another company project")
 
