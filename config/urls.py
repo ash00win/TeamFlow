@@ -23,6 +23,7 @@ from accounts.views import (
     ProtectedView,
     ProjectViewSet,
     TaskViewSet,
+    UpgradePlanView
 )
 
 from rest_framework_simplejwt.views import (
@@ -41,5 +42,6 @@ urlpatterns = [
     path('api/login/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
     path('api/protected/', ProtectedView.as_view()),
+    path('api/upgrade-plan/', UpgradePlanView.as_view()),
     path('api/', include(router.urls)),
 ]

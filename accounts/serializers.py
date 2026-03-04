@@ -48,3 +48,5 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('company',)
         
+class UpgradePlanSerializer(serializers.Serializer):
+    plan = serializers.ChoiceField(choices=["FREE", "PRO"])

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-
+from .serializers import UpgradePlanSerializer
 from .permissions import IsOwner, IsManagerOrOwner, IsProjectMember
 from .models import Project, Task
 from .serializers import (
@@ -27,6 +27,7 @@ class RegisterCompanyView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ProtectedView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -35,7 +36,8 @@ class ProtectedView(APIView):
             "message": "You are authenticated!",
             "user": request.user.username,
             "company": request.user.company.name if request.user.company else None,
-            "role": request.user.role
+            "role": request.user.role,
+            "plan": request.user.company.plan if request.user.company else None
         })
 
 
@@ -91,3 +93,27 @@ class TaskViewSet(viewsets.ModelViewSet):
             raise PermissionError("Cannot add task to another company project")
 
         serializer.save(company=self.request.user.company)
+        
+        
+class UpgradePlanView(APIView):
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def post(self, request):
+
+        serializer = UpgradePlanSerializer(data=request.data)
+
+        if serializer.is_valid():
+            company = request.user.company
+            new_plan = serializer.validated_data["plan"]
+
+            company.plan = new_plan
+            company.save()
+
+            return Response(
+                {
+                    "message": f"Company plan upgraded to {new_plan}"
+                },
+                status=status.HTTP_200_OK
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
