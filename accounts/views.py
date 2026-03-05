@@ -78,8 +78,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
             created_by=self.request.user
         )
 
-
 class TaskViewSet(viewsets.ModelViewSet):
+
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated, IsProjectMember]
 
@@ -87,12 +87,15 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Task.objects.filter(company=self.request.user.company)
 
     def perform_create(self, serializer):
+
         project = serializer.validated_data.get("project")
 
         if project.company != self.request.user.company:
-            raise PermissionError("Cannot add task to another company project")
+            raise ValidationError("Project does not belong to your company")
 
-        serializer.save(company=self.request.user.company)
+        serializer.save(
+            company=self.request.user.company
+        )
         
         
 class UpgradePlanView(APIView):

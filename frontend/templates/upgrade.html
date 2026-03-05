@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Upgrade Plan</title>
+
+<style>
+
+body{
+font-family:'Segoe UI';
+background:#f4f6f9;
+margin:0;
+}
+
+.sidebar{
+width:220px;
+height:100vh;
+background:#1e293b;
+color:white;
+position:fixed;
+padding-top:30px;
+}
+
+.sidebar a{
+display:block;
+padding:12px 25px;
+color:white;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#334155;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+button{
+padding:12px 20px;
+background:#22c55e;
+border:none;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2 style="text-align:center;">TeamFlow</h2>
+
+<a href="/dashboard/">Dashboard</a>
+<a href="/projects/">Projects</a>
+<a href="/tasks/">Tasks</a>
+<a href="/upgrade/">Upgrade Plan</a>
+<a href="#" onclick="logout()">Logout</a>
+
+</div>
+
+<div class="main">
+
+<h1>Upgrade Plan</h1>
+
+<p>Upgrade your company to <strong>PRO</strong> plan.</p>
+
+<button onclick="upgrade()">Upgrade to PRO</button>
+
+</div>
+
+<script>
+
+const token=localStorage.getItem("token");
+
+async function upgrade(){
+
+let res=await fetch("/api/upgrade-plan/",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer "+token
+},
+body:JSON.stringify({
+plan:"PRO"
+})
+})
+
+let data=await res.json();
+
+alert(data.message)
+
+}
+
+function logout(){
+
+localStorage.removeItem("token")
+
+window.location="/"
+
+}
+
+</script>
+
+</body>
+</html>

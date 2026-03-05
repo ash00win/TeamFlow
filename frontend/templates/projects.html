@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Projects</title>
+
+<style>
+
+body{
+font-family:'Segoe UI';
+background:#f4f6f9;
+margin:0;
+}
+
+.sidebar{
+width:220px;
+height:100vh;
+background:#1e293b;
+color:white;
+position:fixed;
+padding-top:30px;
+}
+
+.sidebar a{
+display:block;
+padding:12px 25px;
+color:white;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#334155;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.project-card{
+background:white;
+padding:15px;
+margin-bottom:10px;
+border-radius:8px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+
+input{
+padding:10px;
+margin-right:10px;
+}
+
+button{
+padding:10px 15px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2 style="text-align:center;">TeamFlow</h2>
+
+<a href="/dashboard/">Dashboard</a>
+<a href="/projects/">Projects</a>
+<a href="/tasks/">Tasks</a>
+<a href="/upgrade/">Upgrade Plan</a>
+<a href="#" onclick="logout()">Logout</a>
+
+</div>
+
+<div class="main">
+
+<h1>Projects</h1>
+
+<div>
+<input id="projectName" placeholder="Project name">
+<button onclick="createProject()">Create</button>
+</div>
+
+<br>
+
+<div id="projects"></div>
+
+</div>
+
+<script>
+
+const token=localStorage.getItem("token");
+
+async function loadProjects(){
+
+let res=await fetch("/api/projects/",{
+headers:{
+Authorization:"Bearer "+token
+}
+})
+
+let data=await res.json();
+
+let html="";
+
+data.forEach(p=>{
+html += `
+<div class="project-card">
+
+<h3>${p.name}</h3>
+
+<p>${p.description || "No description"}</p>
+
+<small>
+Created by: ${p.created_by} |
+Created: ${new Date(p.created_at).toLocaleDateString()}
+</small>
+
+</div>
+`
+})
+
+document.getElementById("projects").innerHTML=html;
+
+}
+
+async function createProject(){
+
+let name=document.getElementById("projectName").value;
+
+await fetch("/api/projects/",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer "+token
+},
+body:JSON.stringify({
+name:name
+})
+})
+
+loadProjects()
+
+}
+
+loadProjects()
+
+function logout(){
+
+localStorage.removeItem("token")
+
+window.location="/"
+
+}
+
+</script>
+
+</body>
+</html>

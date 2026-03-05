@@ -1,0 +1,163 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>TeamFlow Dashboard</title>
+
+<style>
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#f4f6f9;
+}
+
+.sidebar{
+width:220px;
+height:100vh;
+background:#1e293b;
+color:white;
+position:fixed;
+padding-top:30px;
+}
+
+.sidebar h2{
+text-align:center;
+margin-bottom:30px;
+}
+
+.sidebar a{
+display:block;
+padding:12px 25px;
+color:white;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#334155;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+.card-container{
+display:flex;
+gap:20px;
+margin-top:20px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:10px;
+width:200px;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card h3{
+margin:0;
+font-size:28px;
+}
+
+.card p{
+color:#666;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2>TeamFlow</h2>
+
+<a href="/dashboard/">Dashboard</a>
+<a href="/projects/">Projects</a>
+<a href="/tasks/">Tasks</a>
+<a href="/upgrade/">Upgrade Plan</a>
+<a href="#" onclick="logout()">Logout</a>
+
+</div>
+
+<div class="main">
+
+<h1>Dashboard</h1>
+
+<div id="userinfo"></div>
+
+<div class="card-container">
+
+<div class="card">
+<h3 id="projects">0</h3>
+<p>Projects</p>
+</div>
+
+<div class="card">
+<h3 id="tasks">0</h3>
+<p>Tasks</p>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+    const token = localStorage.getItem("token");
+    
+    if(!token){
+        window.location = "/";
+    }
+    
+    async function loadDashboard(){
+    
+        // Get user info
+        let userRes = await fetch("/api/protected/",{
+            headers:{
+                Authorization:"Bearer " + token
+            }
+        })
+    
+        let userData = await userRes.json();
+    
+        document.getElementById("userinfo").innerHTML = `
+        <p><strong>User:</strong> ${userData.user}</p>
+        <p><strong>Company:</strong> ${userData.company}</p>
+        <p><strong>Role:</strong> ${userData.role}</p>
+        `
+    
+        // Get projects
+        let projectRes = await fetch("/api/projects/",{
+            headers:{
+                Authorization:"Bearer " + token
+            }
+        })
+    
+        let projects = await projectRes.json();
+    
+        // Get tasks
+        let taskRes = await fetch("/api/tasks/",{
+            headers:{
+                Authorization:"Bearer " + token
+            }
+        })
+    
+        let tasks = await taskRes.json();
+    
+        document.getElementById("projects").innerText = projects.length
+        document.getElementById("tasks").innerText = tasks.length
+    
+    }
+    
+    loadDashboard()
+
+
+    </script>
+
+</body>
+</html>

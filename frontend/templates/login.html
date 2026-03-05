@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TeamFlow Login</title>
+
+    <style>
+        body{
+            margin:0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg,#1e3c72,#2a5298);
+            height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+
+        .login-container{
+            background:white;
+            padding:40px;
+            border-radius:12px;
+            width:350px;
+            box-shadow:0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .login-container h2{
+            text-align:center;
+            margin-bottom:25px;
+            color:#333;
+        }
+
+        .input-field{
+            width:100%;
+            padding:12px;
+            margin-bottom:15px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:14px;
+        }
+
+        .login-btn{
+            width:100%;
+            padding:12px;
+            background:#2a5298;
+            color:white;
+            border:none;
+            border-radius:6px;
+            font-size:15px;
+            cursor:pointer;
+        }
+
+        .login-btn:hover{
+            background:#1e3c72;
+        }
+
+        .logo{
+            text-align:center;
+            font-size:24px;
+            font-weight:bold;
+            margin-bottom:20px;
+            color:#2a5298;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="login-container">
+
+    <div class="logo">TeamFlow</div>
+
+    <h2>Sign In</h2>
+
+    <form id="loginForm">
+
+        <input class="input-field" type="text" id="username" placeholder="Username">
+
+        <input class="input-field" type="password" id="password" placeholder="Password">
+
+        <button class="login-btn">Login</button>
+
+    </form>
+
+</div>
+
+<script>
+
+document.getElementById("loginForm").addEventListener("submit", async function(e){
+
+e.preventDefault();
+
+let username=document.getElementById("username").value;
+let password=document.getElementById("password").value;
+
+let response=await fetch("/api/login/",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+username:username,
+password:password
+})
+})
+
+let data=await response.json();
+
+localStorage.setItem("token",data.access);
+
+window.location.href="/dashboard/";
+
+})
+
+</script>
+
+</body>
+</html>
