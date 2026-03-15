@@ -1,13 +1,14 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-
+from accounts.views import signup_page
 from accounts.views import (
     RegisterCompanyView,
     ProtectedView,
     UpgradePlanView,
     ProjectViewSet,
-    TaskViewSet
+    TaskViewSet,
+    AddUserView
 )
 
 from rest_framework_simplejwt.views import (
@@ -25,14 +26,14 @@ urlpatterns = [
 
     # Frontend pages
     path('', include('frontend.urls')),
-
+    path('signup/', signup_page),
     # Auth APIs
     path('api/register/', RegisterCompanyView.as_view()),
     path('api/login/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
     path('api/protected/', ProtectedView.as_view()),
     path('api/upgrade-plan/', UpgradePlanView.as_view()),
-
+    path("api/add-user/", AddUserView.as_view()),
     # Project & Task APIs
     path('api/', include(router.urls)),
 ]

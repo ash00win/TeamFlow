@@ -80,39 +80,52 @@
 
         <button class="login-btn">Login</button>
 
+        <p>
+            Don't have an account?
+            <a href="/signup/">Create Workspace</a>
+            </p>
+
     </form>
 
 </div>
 
 <script>
 
-document.getElementById("loginForm").addEventListener("submit", async function(e){
-
-e.preventDefault();
-
-let username=document.getElementById("username").value;
-let password=document.getElementById("password").value;
-
-let response=await fetch("/api/login/",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-username:username,
-password:password
-})
-})
-
-let data=await response.json();
-
-localStorage.setItem("token",data.access);
-
-window.location.href="/dashboard/";
-
-})
-
-</script>
+    document.getElementById("loginForm").addEventListener("submit", async function(e){
+    
+    e.preventDefault();
+    
+    let username=document.getElementById("username").value;
+    let password=document.getElementById("password").value;
+    
+    let response=await fetch("/api/login/",{
+    method:"POST",
+    headers:{
+    "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+    username:username,
+    password:password
+    })
+    })
+    
+    let data=await response.json();
+    
+    if(response.ok){
+    
+    localStorage.setItem("token",data.access);
+    
+    window.location.href="/dashboard/";
+    
+    }else{
+    
+    alert(data.detail || "Invalid username or password");
+    
+    }
+    
+    })
+    
+    </script>
 
 </body>
 </html>

@@ -50,3 +50,25 @@ class TaskSerializer(serializers.ModelSerializer):
         
 class UpgradePlanSerializer(serializers.Serializer):
     plan = serializers.ChoiceField(choices=["FREE", "PRO"])
+    
+    
+class AddUserSerializer(serializers.Serializer):
+
+    username = serializers.CharField()
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    role = serializers.ChoiceField(choices=["MANAGER","MEMBER"])
+
+    def create(self, validated_data):
+
+        request = self.context["request"]
+
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+            company=request.user.company,
+            role=validated_data["role"]
+        )
+
+        return user

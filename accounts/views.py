@@ -9,10 +9,15 @@ from .models import Project, Task
 from .serializers import (
     CompanyRegisterSerializer,
     ProjectSerializer,
-    TaskSerializer
+    TaskSerializer,
+    AddUserSerializer
 )
 
 
+from django.shortcuts import render
+
+def signup_page(request):
+    return render(request, "signup.html")
 
 class RegisterCompanyView(APIView):
     def post(self, request):
@@ -120,3 +125,26 @@ class UpgradePlanView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class AddUserView(APIView):
+
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def post(self, request):
+
+        serializer = AddUserSerializer(
+            data=request.data,
+            context={"request":request}
+        )
+
+        if serializer.is_valid():
+
+            serializer.save()
+
+            return Response(
+                {"message":"User added successfully"},
+                status=201
+            )
+
+        return Response(serializer.errors,status=400)

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Team Members</title>
+
+<style>
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#f4f6f9;
+}
+
+.sidebar{
+width:220px;
+height:100vh;
+background:#1e293b;
+color:white;
+position:fixed;
+padding-top:30px;
+}
+
+.sidebar h2{
+text-align:center;
+margin-bottom:30px;
+}
+
+.sidebar a{
+display:block;
+padding:12px 25px;
+color:white;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#334155;
+}
+
+.main{
+margin-left:220px;
+padding:30px;
+}
+
+input, select{
+width:300px;
+padding:10px;
+margin-top:10px;
+display:block;
+border-radius:6px;
+border:1px solid #ddd;
+}
+
+button{
+margin-top:15px;
+padding:10px 20px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h2>TeamFlow</h2>
+
+<a href="/dashboard/">Dashboard</a>
+<a href="/projects/">Projects</a>
+<a href="/tasks/">Tasks</a>
+<a href="/team/">Team</a>
+<a href="/upgrade/">Upgrade Plan</a>
+<a href="#" onclick="logout()">Logout</a>
+
+</div>
+
+
+<div class="main">
+
+<h1>Team Members</h1>
+
+<input id="username" placeholder="Username">
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<select id="role">
+<option value="MANAGER">Manager</option>
+<option value="MEMBER">Member</option>
+</select>
+
+<button onclick="addUser()">Add User</button>
+
+</div>
+
+
+<script>
+
+const token = localStorage.getItem("token")
+
+if(!token){
+window.location="/"
+}
+
+function logout(){
+localStorage.removeItem("token")
+window.location="/"
+}
+
+async function addUser(){
+
+    let token = localStorage.getItem("token")
+    
+    let username=document.getElementById("username").value
+    let email=document.getElementById("email").value
+    let password=document.getElementById("password").value
+    let role=document.getElementById("role").value
+    
+    let res=await fetch("/api/add-user/",{
+    method:"POST",
+    headers:{
+    "Content-Type":"application/json",
+    Authorization:"Bearer "+token
+    },
+    body:JSON.stringify({
+    username,
+    email,
+    password,
+    role
+    })
+    })
+    
+    let data = await res.json()
+    
+    if(res.ok){
+    alert("User added successfully")
+    }else{
+    alert(JSON.stringify(data))
+    }
+    
+    }
+
+</script>
+
+</body>
+</html>

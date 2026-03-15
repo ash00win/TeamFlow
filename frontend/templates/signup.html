@@ -1,0 +1,144 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>TeamFlow Signup</title>
+
+<style>
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background: linear-gradient(135deg,#1e3c72,#2a5298);
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.signup-container{
+background:white;
+padding:40px;
+border-radius:12px;
+width:350px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+
+.signup-container h2{
+text-align:center;
+margin-bottom:25px;
+color:#333;
+}
+
+.logo{
+text-align:center;
+font-size:24px;
+font-weight:bold;
+margin-bottom:20px;
+color:#2a5298;
+}
+
+.input-field{
+width:100%;
+padding:12px;
+margin-bottom:15px;
+border:1px solid #ddd;
+border-radius:6px;
+font-size:14px;
+}
+
+.signup-btn{
+width:100%;
+padding:12px;
+background:#2a5298;
+color:white;
+border:none;
+border-radius:6px;
+font-size:15px;
+cursor:pointer;
+}
+
+.signup-btn:hover{
+background:#1e3c72;
+}
+
+.footer-text{
+text-align:center;
+margin-top:10px;
+font-size:14px;
+}
+
+.footer-text a{
+color:#2a5298;
+text-decoration:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="signup-container">
+
+<div class="logo">TeamFlow</div>
+
+<h2>Create Workspace</h2>
+
+<input class="input-field" id="company" placeholder="Company Name">
+
+<input class="input-field" id="username" placeholder="Username">
+
+<input class="input-field" id="email" placeholder="Email">
+
+<input class="input-field" type="password" id="password" placeholder="Password">
+
+<button class="signup-btn" onclick="signup()">Create Account</button>
+
+<div class="footer-text">
+Already have an account?
+<a href="/">Login</a>
+</div>
+
+</div>
+
+<script>
+
+async function signup(){
+
+let company=document.getElementById("company").value
+let username=document.getElementById("username").value
+let email=document.getElementById("email").value
+let password=document.getElementById("password").value
+
+let res=await fetch("/api/register/",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+company_name:company,
+username:username,
+email:email,
+password:password
+})
+})
+
+let data = await res.json()
+
+if(res.ok){
+
+alert("Workspace created. Please login.")
+window.location="/"
+
+}else{
+
+alert(data.detail || "Signup failed")
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

@@ -7,4 +7,5 @@ urlpatterns = [
     path('projects/', projects_page),
     path('tasks/', tasks_page),
     path('upgrade/', upgrade_page),
+    path("team/", team_page),
 ]

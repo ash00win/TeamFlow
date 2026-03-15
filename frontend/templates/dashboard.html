@@ -72,17 +72,18 @@ color:#666;
 
 <body>
 
-<div class="sidebar">
+    <div class="sidebar">
 
-<h2>TeamFlow</h2>
-
-<a href="/dashboard/">Dashboard</a>
-<a href="/projects/">Projects</a>
-<a href="/tasks/">Tasks</a>
-<a href="/upgrade/">Upgrade Plan</a>
-<a href="#" onclick="logout()">Logout</a>
-
-</div>
+        <h2>TeamFlow</h2>
+        
+        <a href="/dashboard/">Dashboard</a>
+        <a href="/projects/">Projects</a>
+        <a href="/tasks/">Tasks</a>
+        <a href="/team/">Team</a>
+        <a href="/upgrade/">Upgrade Plan</a>
+        <a href="#" onclick="logout()">Logout</a>
+        
+        </div>
 
 <div class="main">
 
@@ -110,18 +111,34 @@ color:#666;
 
     const token = localStorage.getItem("token");
     
+    // If no token → go to login
     if(!token){
         window.location = "/";
     }
     
+    // Logout function
+    function logout(){
+        localStorage.removeItem("token");
+        window.location = "/";
+    }
+    
+    // Load dashboard data
     async function loadDashboard(){
     
-        // Get user info
+    try{
+    
+        // Fetch user info
         let userRes = await fetch("/api/protected/",{
             headers:{
                 Authorization:"Bearer " + token
             }
         })
+    
+        // If token invalid → logout
+        if(!userRes.ok){
+            logout();
+            return;
+        }
     
         let userData = await userRes.json();
     
@@ -131,32 +148,50 @@ color:#666;
         <p><strong>Role:</strong> ${userData.role}</p>
         `
     
-        // Get projects
+    
+        // Fetch projects
         let projectRes = await fetch("/api/projects/",{
             headers:{
                 Authorization:"Bearer " + token
             }
         })
     
-        let projects = await projectRes.json();
+        let projects = [];
     
-        // Get tasks
+        if(projectRes.ok){
+            projects = await projectRes.json();
+        }
+    
+    
+        // Fetch tasks
         let taskRes = await fetch("/api/tasks/",{
             headers:{
                 Authorization:"Bearer " + token
             }
         })
     
-        let tasks = await taskRes.json();
+        let tasks = [];
     
+        if(taskRes.ok){
+            tasks = await taskRes.json();
+        }
+    
+    
+        // Update dashboard cards
         document.getElementById("projects").innerText = projects.length
         document.getElementById("tasks").innerText = tasks.length
+    
+    }catch(error){
+    
+        console.error("Dashboard load error:", error)
+        logout()
+    
+    }
     
     }
     
     loadDashboard()
-
-
+    
     </script>
 
 </body>

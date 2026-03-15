@@ -14,3 +14,6 @@ def tasks_page(request):
 
 def upgrade_page(request):
     return render(request, "upgrade.html")
+
+def team_page(request):
+    return render(request,"team.html")
