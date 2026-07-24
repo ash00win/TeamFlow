@@ -20,6 +20,8 @@ Runs on Render's free tier, so the instance spins down after ~15 minutes of inac
 - Auto-generated OpenAPI schema + Swagger/Redoc docs
 - Server-rendered dashboard, projects, tasks, team, and upgrade pages
 - Scheduled background jobs via Celery Beat: overdue task reminders, weekly project summaries, subscription expiry alerts
+- Production security hardening (SSL redirect, secure cookies, HSTS) behind env vars, off by default so local HTTP dev isn't affected
+- CI on every push/PR: tests run against real Postgres + Redis service containers, not just SQLite
 
 ## Tech Stack
 
@@ -65,7 +67,7 @@ celery -A config beat -l info
 docker compose up --build
 ```
 
-This starts the Django app, Postgres, Redis, and both the Celery worker and beat scheduler together, and runs migrations automatically. The app is then available at `http://localhost:8000`.
+This starts Postgres and Redis, runs migrations via a one-shot `migrate` service, then brings up the Django app plus both the Celery worker and beat scheduler. The app is then available at **`http://localhost:8000`** — note that Django's own log line prints `0.0.0.0:8000`, which is the bind address, not a URL you can open in a browser.
 
 ## API overview
 
