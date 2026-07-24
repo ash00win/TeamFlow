@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
@@ -101,8 +104,8 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer.save(
             company=self.request.user.company
         )
-        
-        
+
+
 class UpgradePlanView(APIView):
     permission_classes = [IsAuthenticated, IsOwner]
 
@@ -115,6 +118,11 @@ class UpgradePlanView(APIView):
             new_plan = serializer.validated_data["plan"]
 
             company.plan = new_plan
+            company.expiry_date = (
+                timezone.now().date() + timedelta(days=30)
+                if new_plan == "PRO"
+                else None
+            )
             company.save()
 
             return Response(
@@ -125,7 +133,7 @@ class UpgradePlanView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 
 class AddUserView(APIView):
 

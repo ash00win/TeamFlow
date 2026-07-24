@@ -13,6 +13,7 @@ class Company(models.Model):
 
     name = models.CharField(max_length=255)
     plan = models.CharField(max_length=10, choices=PLAN_CHOICES, default='FREE')
+    expiry_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -116,6 +117,7 @@ class Task(models.Model):
         blank=True,
         related_name='assigned_tasks'
     )
+    due_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
