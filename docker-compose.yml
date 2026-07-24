@@ -1,0 +1,61 @@
+x-app-env: &app-env
+  SECRET_KEY: dev-docker-secret-key-change-me
+  DEBUG: "True"
+  ALLOWED_HOSTS: "localhost,127.0.0.1"
+  DATABASE_URL: postgres://teamflow:teamflow@db:5432/teamflow
+  CELERY_BROKER_URL: redis://redis:6379/0
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: teamflow
+      POSTGRES_USER: teamflow
+      POSTGRES_PASSWORD: teamflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *app-env
+    depends_on:
+      - db
+      - redis
+
+  celery_worker:
+    build: .
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+    environment:
+      <<: *app-env
+    depends_on:
+      - db
+      - redis
+
+  celery_beat:
+    build: .
+    command: celery -A config beat -l info
+    volumes:
+      - .:/app
+    environment:
+      <<: *app-env
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:

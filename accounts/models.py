@@ -122,3 +122,43 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AuditLog(models.Model):
+    ACTION_CHOICES = (
+        ('PROJECT_CREATED', 'Project created'),
+        ('PROJECT_DELETED', 'Project deleted'),
+        ('TASK_CREATED', 'Task created'),
+        ('USER_ADDED', 'User added'),
+        ('PLAN_UPGRADED', 'Plan changed'),
+    )
+
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='audit_logs'
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audit_logs'
+    )
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES)
+    description = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f"{self.action} by {self.actor} @ {self.created_at:%Y-%m-%d %H:%M}"
+
+
+def log_action(company, actor, action, description=""):
+    return AuditLog.objects.create(
+        company=company,
+        actor=actor,
+        action=action,
+        description=description,
+    )

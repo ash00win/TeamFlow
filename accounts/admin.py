@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Company, User, Project, Task, Membership
+from .models import Company, User, Project, Task, Membership, AuditLog
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
@@ -27,3 +27,10 @@ class TaskAdmin(admin.ModelAdmin):
 @admin.register(Membership)
 class MembershipAdmin(admin.ModelAdmin):
     list_display = ("user", "company", "joined_at")
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ("action", "actor", "company", "description", "created_at")
+    list_filter = ("action", "company")
+    search_fields = ("description",)

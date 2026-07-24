@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from .models import Company, User, Project, Task
+from .models import Company, User, Project, Task, AuditLog
 
 
 class TenantIsolationTests(APITestCase):
@@ -144,3 +144,60 @@ class RolePermissionTests(APITestCase):
             "password": "pass12345", "role": "MEMBER",
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class AuditLogTests(APITestCase):
+    """Key actions must be recorded and only visible to the Owner of that company."""
+
+    def setUp(self):
+        self.company = Company.objects.create(name="Audit Co", plan="PRO")
+        self.other_company = Company.objects.create(name="Other Co", plan="PRO")
+
+        self.owner = User.objects.create_user(
+            username="audit_owner", password="pass12345",
+            company=self.company, role="OWNER",
+        )
+        self.member = User.objects.create_user(
+            username="audit_member", password="pass12345",
+            company=self.company, role="MEMBER",
+        )
+        self.other_owner = User.objects.create_user(
+            username="other_owner", password="pass12345",
+            company=self.other_company, role="OWNER",
+        )
+
+    def test_project_creation_is_logged(self):
+        self.client.force_authenticate(user=self.owner)
+        self.client.post("/api/projects/", {"name": "Logged Project"})
+
+        log = AuditLog.objects.get(company=self.company, action="PROJECT_CREATED")
+        self.assertEqual(log.actor, self.owner)
+        self.assertEqual(log.description, "Logged Project")
+
+    def test_project_deletion_is_logged(self):
+        self.client.force_authenticate(user=self.owner)
+        create_response = self.client.post("/api/projects/", {"name": "To Delete"})
+        project_id = create_response.data["id"]
+
+        self.client.delete(f"/api/projects/{project_id}/")
+
+        self.assertTrue(
+            AuditLog.objects.filter(company=self.company, action="PROJECT_DELETED").exists()
+        )
+
+    def test_member_cannot_view_audit_logs(self):
+        self.client.force_authenticate(user=self.member)
+        response = self.client.get("/api/audit-logs/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_owner_only_sees_own_companys_logs(self):
+        AuditLog.objects.create(company=self.company, actor=self.owner, action="PROJECT_CREATED", description="Mine")
+        AuditLog.objects.create(company=self.other_company, actor=self.other_owner, action="PROJECT_CREATED", description="Not mine")
+
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.get("/api/audit-logs/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        descriptions = [entry["description"] for entry in response.data]
+        self.assertIn("Mine", descriptions)
+        self.assertNotIn("Not mine", descriptions)

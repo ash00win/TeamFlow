@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import serializers as drf_serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
@@ -8,12 +10,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from .serializers import UpgradePlanSerializer
 from .permissions import IsOwner, IsManagerOrOwner, IsProjectMember
-from .models import Project, Task
+from .models import Project, Task, AuditLog, log_action
 from .serializers import (
     CompanyRegisterSerializer,
     ProjectSerializer,
     TaskSerializer,
-    AddUserSerializer
+    AddUserSerializer,
+    AuditLogSerializer,
 )
 
 
@@ -23,6 +26,9 @@ def signup_page(request):
     return render(request, "signup.html")
 
 class RegisterCompanyView(APIView):
+    serializer_class = CompanyRegisterSerializer
+
+    @extend_schema(request=CompanyRegisterSerializer)
     def post(self, request):
         serializer = CompanyRegisterSerializer(data=request.data)
 
@@ -39,6 +45,16 @@ class RegisterCompanyView(APIView):
 class ProtectedView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=inline_serializer(
+        name="ProtectedStatus",
+        fields={
+            "message": drf_serializers.CharField(),
+            "user": drf_serializers.CharField(),
+            "company": drf_serializers.CharField(allow_null=True),
+            "role": drf_serializers.CharField(),
+            "plan": drf_serializers.CharField(allow_null=True),
+        },
+    ))
     def get(self, request):
         return Response({
             "message": "You are authenticated!",
@@ -81,10 +97,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     {"error": "Free plan allows only 3 projects. Upgrade to PRO."}
                 )
 
-        serializer.save(
+        project = serializer.save(
             company=company,
             created_by=self.request.user
         )
+
+        log_action(company, self.request.user, "PROJECT_CREATED", project.name)
+
+    def perform_destroy(self, instance):
+        log_action(instance.company, self.request.user, "PROJECT_DELETED", instance.name)
+        instance.delete()
 
 class TaskViewSet(viewsets.ModelViewSet):
 
@@ -101,14 +123,18 @@ class TaskViewSet(viewsets.ModelViewSet):
         if project.company != self.request.user.company:
             raise ValidationError("Project does not belong to your company")
 
-        serializer.save(
+        task = serializer.save(
             company=self.request.user.company
         )
+
+        log_action(self.request.user.company, self.request.user, "TASK_CREATED", task.title)
 
 
 class UpgradePlanView(APIView):
     permission_classes = [IsAuthenticated, IsOwner]
+    serializer_class = UpgradePlanSerializer
 
+    @extend_schema(request=UpgradePlanSerializer)
     def post(self, request):
 
         serializer = UpgradePlanSerializer(data=request.data)
@@ -125,6 +151,8 @@ class UpgradePlanView(APIView):
             )
             company.save()
 
+            log_action(company, request.user, "PLAN_UPGRADED", f"Plan changed to {new_plan}")
+
             return Response(
                 {
                     "message": f"Company plan upgraded to {new_plan}"
@@ -133,12 +161,14 @@ class UpgradePlanView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
 
 class AddUserView(APIView):
 
     permission_classes = [IsAuthenticated, IsOwner]
+    serializer_class = AddUserSerializer
 
+    @extend_schema(request=AddUserSerializer)
     def post(self, request):
 
         serializer = AddUserSerializer(
@@ -148,7 +178,12 @@ class AddUserView(APIView):
 
         if serializer.is_valid():
 
-            serializer.save()
+            new_user = serializer.save()
+
+            log_action(
+                request.user.company, request.user, "USER_ADDED",
+                f"{new_user.username} added as {new_user.role}"
+            )
 
             return Response(
                 {"message":"User added successfully"},
@@ -156,3 +191,12 @@ class AddUserView(APIView):
             )
 
         return Response(serializer.errors,status=400)
+
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+
+    serializer_class = AuditLogSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        return AuditLog.objects.filter(company=self.request.user.company)

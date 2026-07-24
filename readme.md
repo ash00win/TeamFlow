@@ -1,6 +1,6 @@
 # TeamFlow
 
-TeamFlow is a multi-tenant project and task management SaaS built with Django and Django REST Framework. Each company gets an isolated workspace with role-based access control, a Free/Pro plan tier, and background email jobs powered by Celery.
+TeamFlow is a multi-tenant project and task management SaaS built with Django and Django REST Framework. Each company gets an isolated workspace with role-based access control, a Free/Pro plan tier, an audit trail, and background email jobs powered by Celery.
 
 ## Features
 
@@ -10,6 +10,8 @@ TeamFlow is a multi-tenant project and task management SaaS built with Django an
 - Project and task management via a DRF `ModelViewSet` API
 - Role-based permissions (e.g. only Owners can delete projects or add users)
 - Free plan is capped at 3 projects per company; upgrading to Pro lifts the cap
+- Audit log of key actions (project created/deleted, task created, user added, plan changed), visible to company Owners
+- Auto-generated OpenAPI schema + Swagger/Redoc docs
 - Server-rendered dashboard, projects, tasks, team, and upgrade pages
 - Scheduled background jobs via Celery Beat: overdue task reminders, weekly project summaries, subscription expiry alerts
 
@@ -18,17 +20,18 @@ TeamFlow is a multi-tenant project and task management SaaS built with Django an
 - **Backend:** Python, Django, Django REST Framework
 - **Auth:** JWT (djangorestframework-simplejwt)
 - **Background jobs:** Celery + Redis (broker), django-celery-beat (scheduler)
-- **Database:** SQLite in development; swap `DATABASES` in `config/settings.py` for Postgres/MySQL in production
+- **Database:** SQLite for zero-config local dev; Postgres in Docker/production (switches automatically via `DATABASE_URL`)
+- **API docs:** drf-spectacular (OpenAPI schema, Swagger UI, Redoc)
 - **Frontend:** Django templates (no separate SPA yet)
 - **Config:** environment variables via django-environ
 
 ## Project layout
 
-- `accounts/` — the core app: models (`Company`, `User`, `Membership`, `Project`, `Task`), DRF views/serializers/permissions, and Celery tasks
+- `accounts/` — the core app: models (`Company`, `User`, `Membership`, `Project`, `Task`, `AuditLog`), DRF views/serializers/permissions, and Celery tasks
 - `frontend/` — server-rendered pages (login, signup, dashboard, projects, tasks, team, upgrade)
 - `config/` — Django settings, URL routing, Celery app config
 
-## Setup
+## Setup (local, no Docker)
 
 ```bash
 python -m venv venv
@@ -43,12 +46,20 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-To run the background jobs, you also need Redis running locally and a Celery worker + beat process:
+This mode uses SQLite and needs no other services running. To also run the background jobs, you need Redis running locally plus a Celery worker + beat process:
 
 ```bash
 celery -A config worker -l info
 celery -A config beat -l info
 ```
+
+## Setup (Docker)
+
+```bash
+docker compose up --build
+```
+
+This starts the Django app, Postgres, Redis, and both the Celery worker and beat scheduler together, and runs migrations automatically. The app is then available at `http://localhost:8000`.
 
 ## API overview
 
@@ -62,6 +73,9 @@ celery -A config beat -l info
 | `/api/tasks/` | GET/POST | List or create tasks (company-scoped) |
 | `/api/add-user/` | POST | Owner adds a Manager/Member to their company |
 | `/api/upgrade-plan/` | POST | Owner upgrades/downgrades the company plan |
+| `/api/audit-logs/` | GET | Owner views the company's audit trail |
+
+Full interactive docs: `/api/docs/` (Swagger UI) and `/api/redoc/` (Redoc). Raw schema at `/api/schema/`.
 
 ## Tests
 

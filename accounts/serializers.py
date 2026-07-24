@@ -26,7 +26,7 @@ class CompanyRegisterSerializer(serializers.Serializer):
         return user
     
 from rest_framework import serializers
-from .models import Project, Task
+from .models import Project, Task, AuditLog
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -72,3 +72,11 @@ class AddUserSerializer(serializers.Serializer):
         )
 
         return user
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    actor = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = AuditLog
+        fields = ('id', 'actor', 'action', 'description', 'created_at')
