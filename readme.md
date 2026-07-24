@@ -2,6 +2,10 @@
 
 TeamFlow is a multi-tenant project and task management SaaS built with Django and Django REST Framework. Each company gets an isolated workspace with role-based access control, a Free/Pro plan tier, an audit trail, and background email jobs powered by Celery.
 
+**Live demo:** https://teamflow-web-10tl.onrender.com — [API docs](https://teamflow-web-10tl.onrender.com/api/docs/) (Swagger UI)
+
+Runs on Render's free tier, so the instance spins down after ~15 minutes of inactivity — the first request after that can take 30-50 seconds to wake it back up. The Celery worker/beat jobs (scheduled reminder emails) aren't deployed here since Render's free plan doesn't support background worker processes; everything else — auth, multi-tenant isolation, RBAC, plan limits, audit log — runs live against a real Postgres database. See [Setup (Docker)](#setup-docker) below to run the full stack including Celery locally.
+
 ## Features
 
 - JWT authentication (SimpleJWT)
