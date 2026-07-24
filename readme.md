@@ -1,5 +1,7 @@
 # TeamFlow
 
+![Tests](https://github.com/ash00win/TeamFlow/actions/workflows/tests.yml/badge.svg)
+
 TeamFlow is a multi-tenant project and task management SaaS built with Django and Django REST Framework. Each company gets an isolated workspace with role-based access control, a Free/Pro plan tier, an audit trail, and background email jobs powered by Celery.
 
 **Live demo:** https://teamflow-web-10tl.onrender.com — [API docs](https://teamflow-web-10tl.onrender.com/api/docs/) (Swagger UI)
@@ -8,7 +10,7 @@ Runs on Render's free tier, so the instance spins down after ~15 minutes of inac
 
 ## Features
 
-- JWT authentication (SimpleJWT)
+- JWT authentication (SimpleJWT), with rate limiting on login/register to slow down brute-force/spam attempts
 - Custom user model with company-scoped roles (Owner / Manager / Member)
 - Multi-tenant data isolation — every query is scoped to `request.user.company`
 - Project and task management via a DRF `ModelViewSet` API

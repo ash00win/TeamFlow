@@ -7,7 +7,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import UpgradePlanSerializer
 from .permissions import IsOwner, IsManagerOrOwner, IsProjectMember
 from .models import Project, Task, AuditLog, log_action
@@ -27,6 +29,8 @@ def signup_page(request):
 
 class RegisterCompanyView(APIView):
     serializer_class = CompanyRegisterSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'register'
 
     @extend_schema(request=CompanyRegisterSerializer)
     def post(self, request):
@@ -40,6 +44,11 @@ class RegisterCompanyView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ThrottledTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
 
 
 class ProtectedView(APIView):

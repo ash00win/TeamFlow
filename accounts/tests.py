@@ -201,3 +201,27 @@ class AuditLogTests(APITestCase):
         descriptions = [entry["description"] for entry in response.data]
         self.assertIn("Mine", descriptions)
         self.assertNotIn("Not mine", descriptions)
+
+
+class AuthThrottleTests(APITestCase):
+    """Repeated login/register attempts must eventually get rate-limited."""
+
+    def test_login_is_throttled_after_five_attempts_per_minute(self):
+        for _ in range(5):
+            response = self.client.post("/api/login/", {
+                "username": "nobody", "password": "wrong",
+            })
+            self.assertNotEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+        response = self.client.post("/api/login/", {
+            "username": "nobody", "password": "wrong",
+        })
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+    def test_register_is_throttled_after_ten_attempts_per_minute(self):
+        for _ in range(10):
+            response = self.client.post("/api/register/", {})
+            self.assertNotEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+        response = self.client.post("/api/register/", {})
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)

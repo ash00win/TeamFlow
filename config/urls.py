@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from accounts.views import signup_page
 from accounts.views import (
     RegisterCompanyView,
+    ThrottledTokenObtainPairView,
     ProtectedView,
     UpgradePlanView,
     ProjectViewSet,
@@ -13,7 +14,6 @@ from accounts.views import (
 )
 
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
 )
 from drf_spectacular.views import (
@@ -36,7 +36,7 @@ urlpatterns = [
     path('signup/', signup_page),
     # Auth APIs
     path('api/register/', RegisterCompanyView.as_view()),
-    path('api/login/', TokenObtainPairView.as_view()),
+    path('api/login/', ThrottledTokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
     path('api/protected/', ProtectedView.as_view()),
     path('api/upgrade-plan/', UpgradePlanView.as_view()),
