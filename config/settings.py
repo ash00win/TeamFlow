@@ -11,21 +11,26 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5z+-h%h#dz)3fjs*x-u_1*uvz0l%jz_0ev6660wc)o_d4v@2x@'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env.bool('DEBUG', default=False)
 
-
-from datetime import timedelta
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -37,10 +42,6 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
-
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'frontend',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -116,7 +118,34 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+
+    "daily-overdue-task-reminder": {
+        "task": "accounts.tasks.send_overdue_task_reminders",
+        "schedule": crontab(hour=9, minute=0),
+    },
+
+    "weekly-project-summary": {
+        "task": "accounts.tasks.weekly_project_summary",
+        "schedule": crontab(day_of_week="monday", hour=8, minute=0),
+    },
+
+    "subscription-expiry-alert": {
+        "task": "accounts.tasks.subscription_expiry_alert",
+        "schedule": crontab(hour=10, minute=0),
+    },
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
