@@ -1,0 +1,75 @@
+databases:
+  - name: teamflow-db
+    plan: free
+
+services:
+  - type: redis
+    name: teamflow-redis
+    plan: free
+    ipAllowList: []
+
+  - type: web
+    name: teamflow-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: teamflow-web.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teamflow-db
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: teamflow-redis
+          property: connectionString
+
+  - type: worker
+    name: teamflow-celery-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A config worker -l info
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: teamflow-web
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teamflow-db
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: teamflow-redis
+          property: connectionString
+
+  - type: worker
+    name: teamflow-celery-beat
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A config beat -l info
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: teamflow-web
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teamflow-db
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: teamflow-redis
+          property: connectionString
